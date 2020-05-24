@@ -21,25 +21,53 @@ var server = http.createServer(function (request, response) {
 
     console.log('有个傻子发请求过来啦！路径（带查询参数）为：' + pathWithQuery)
 
-    let filePath = path === "/" ? "/index.html" : path
-    let index = filePath.lastIndexOf(".")
-    let suffix = filePath.substring(index)
-    let fileTypes = {
-        ".html": "text/html",
-        ".css": "text/css",
-        ".js": "text/javascript",
+    if (path === "/sign_in" && method === "POST") {
+
+    } else if (path === "/home.html") {
+        //pass
+    } else if (path === '/register' && method === 'POST') {
+        response.setHeader("Content-type", "text/html;charset=UTF-8")
+        response.statusCode = 200
+        const userArray = JSON.parse(fs.readFileSync("./db/users.json"))
+        const array = []
+        request.on("data", chunk => {
+            array.push(chunk)
+        })
+        request.on("end", () => {
+            const string = Buffer.concat(array).toString();
+            const obj = JSON.parse(string);
+            console.log(obj)
+            const lastUser = userArray[userArray.length - 1];
+            const newUser = {
+                id: lastUser ? lastUser.id + 1 : 1,
+                name: obj.name,
+                password: obj.password
+            };
+            userArray.push(newUser);
+            fs.writeFileSync("./db/users.json", JSON.stringify(userArray));
+            response.end()
+        })
+    } else {
+        let filePath = path === "/" ? "/index.html" : path
+        let index = filePath.lastIndexOf(".")
+        let suffix = filePath.substring(index)
+        let fileTypes = {
+            ".html": "text/html",
+            ".css": "text/css",
+            ".js": "text/javascript",
+        }
+        let content
+        try {
+            content = fs.readFileSync(`./public${filePath}`)
+        } catch (error) {
+            content = "文件不存在"
+            response.statusCode = 404
+        }
+        response.statusCode = 200
+        response.setHeader('Content-Type', `${fileTypes[suffix] || "text/html"};charset=utf-8`)
+        response.write(content)
+        response.end()
     }
-    let content
-    try {
-        content = fs.readFileSync(`./public${filePath}`)
-    } catch (error) {
-        content = "文件不存在"
-        response.statusCode = 404
-    }
-    response.statusCode = 200
-    response.setHeader('Content-Type', `${fileTypes[suffix] || "text/html"};charset=utf-8`)
-    response.write(content)
-    response.end()
     /******** 代码结束，下面不要看 ************/
 })
 
