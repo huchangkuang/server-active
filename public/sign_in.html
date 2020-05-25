@@ -14,7 +14,7 @@
             <label>用户名<input type="text" name="name"></label>
         </div>
         <div>
-            <label>密码<input type="text" name="password"></label>
+            <label>密码<input type="password" name="password"></label>
         </div>
         <div><button>登录</button></div>
     </form>
@@ -28,7 +28,7 @@
             console.log(name, password);
             $.ajax({
                 method: 'POST',
-                url: '/sign_in.html',
+                url: '/sign_in',
                 contentType: 'test/json;charset=UTF-8',
                 data: JSON.stringify({ name, password })
             }).then(() => {

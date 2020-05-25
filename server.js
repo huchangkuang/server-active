@@ -22,9 +22,40 @@ var server = http.createServer(function (request, response) {
     console.log('有个傻子发请求过来啦！路径（带查询参数）为：' + pathWithQuery)
 
     if (path === "/sign_in" && method === "POST") {
-
+        response.setHeader("Content-type", "text/html;charset=UTF-8")
+        response.statusCode = 200
+        const userArray = JSON.parse(fs.readFileSync("./db/users.json"))
+        const array = []
+        request.on("data", chunk => {
+            array.push(chunk)
+        })
+        request.on("end", () => {
+            const string = Buffer.concat(array).toString();
+            const obj = JSON.parse(string);
+            const user = userArray.find((user) => user.name === obj.name && user.password === obj.password
+            )
+            if (user === undefined) {
+                response.statusCode = 400
+                response.setHeader("Content-type", "text/json;charset=UTF-8")
+                response.end(`"errorCode":4001`)
+            } else {
+                response.statusCode = 200
+                response.setHeader("set-Cookie", "logined=1")
+                response.end()
+            }
+        })
     } else if (path === "/home.html") {
-        //pass
+        const cookie = request.headers["cookie"]
+        if (cookie === "logined=1") {
+            const homeHtml = fs.readFileSync("./public/home.html").toString()
+            const string = homeHtml.replace(`{{loginStatus}}`, "已登录")
+            response.write(string)
+        } else {
+            const homeHtml = fs.readFileSync("./public/home.html").toString()
+            const string = homeHtml.replace(`{{loginStatus}}`, "未登录")
+            response.write(string)
+        }
+        response.end()
     } else if (path === '/register' && method === 'POST') {
         response.setHeader("Content-type", "text/html;charset=UTF-8")
         response.statusCode = 200
